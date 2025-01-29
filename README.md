@@ -46,7 +46,7 @@ This example demonstrates a **CrewAI-based** pipeline that:
    ```
 2. **Run** the script in **another** terminal:
    ```bash
-   python test_crewai_leopard_pontdesarts.py
+   python crewai_leopard_pontdesarts.py
    ```
 3. **Watch** the console:
    - The agent queries DuckDuckGo for relevant facts (bridge length, leopard top speed).  
