@@ -1,0 +1,5 @@
+leopard_crossing_task:
+  description: >
+    How many seconds would it take for a leopard at full speed to run through Pont des Arts?
+  expected_output: >
+    Approximate time in seconds + brief reasoning

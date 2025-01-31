@@ -1,0 +1,6 @@
+crewai
+langchain
+requests
+pydantic
+python-dotenv
+pyyaml
