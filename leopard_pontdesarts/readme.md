@@ -197,14 +197,3 @@ This project is licensed under the  **MIT License** .
 For questions or suggestions, feel free to reach out or open an issue in the repo.
 
 ---
-
-This **README.md** now includes:
-✅ **FastAPI integration**
-
-✅ **Configurable settings**
-
-✅ **Agent and API usage**
-
-✅ **Example API calls**
-
-This keeps the documentation **up-to-date** without including  **streaming yet** . 🚀 Let me know if you need **any refinements!**
