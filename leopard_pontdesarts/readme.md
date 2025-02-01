@@ -1,164 +1,175 @@
-# **🚀 LeopardPontDesArts CrewAI Project - README**
+# 🏃‍♂️ **Leopard Pont des Arts CrewAI Example**
 
-> **Compute how long a leopard would take to cross the Pont des Arts bridge using AI! 🐆🌉**
+## 📌 **Overview**
 
----
-
-## **📌 Project Overview**
-
-This project uses **CrewAI** to create an AI-powered agent that:
-
-1. **Searches the web** for information on leopard speeds using  **DuckDuckGo** .
-2. **Calculates the time** it would take for a leopard running at full speed to cross the  **Pont des Arts bridge** .
-3. **Interacts with a Language Model (LLM)** to generate a structured JSON response.
-4. **Formats the output properly** for easy interpretation.
+This project is a **CrewAI-based agent simulation** designed to calculate how long it takes for a **leopard running at full speed** to cross the **Pont des Arts bridge** in Paris. The agent dynamically retrieves and processes the required data using a **configured LLM** and a  **custom prompt** .
 
 ---
 
-## **📁 Project Structure**
+## 📁 **Project Structure**
 
-```bash
+```
 leopard_pontdesarts/
+│── configs/
+│   ├── agents.yaml      # Configurations for CrewAI agent
+│   ├── prompts.yaml     # Prompt configurations for LLM
+│   ├── tasks.yaml       # Task descriptions & expected output
+│   ├── config.yaml      # General configurations (LLM API details, etc.)
 │── src/
-│   ├── agents.py      # Defines AI agents (LeopardPontDesArtsAgent)
-│   ├── tasks.py       # Defines the specific tasks the agents will perform
-│   ├── llm.py         # Handles LLM API calls and JSON extraction
-│   ├── main.py        # Main entry point to execute the AI pipeline
-│   ├── __init__.py    # Allows src to be recognized as a module
-│── requirements.txt   # Lists required Python dependencies
-│── .env.example       # Example of environment variables needed
-│── README.md          # This file! 📖
+│   ├── agents.py        # Defines the LeopardPontDesArtsAgent class
+│   ├── llm.py           # Handles LLM API requests and responses
+│   ├── tasks.py         # Task creation and assignment
+│   ├── main.py          # Entry point for running the Crew
+│   ├── utils.py         # Helper functions for config loading
+│── venv/                # (Optional) Virtual environment
+│── README.md            # 📌 You are here!
 ```
 
 ---
 
-## **🛠️ Setup Instructions**
+## 🚀 **How It Works**
 
-### **1️⃣ Install Dependencies**
+1. The **CrewAI Agent** is initialized based on `configs/agents.yaml`.
+2. It uses a **custom prompt** (from `configs/prompts.yaml`) to compute crossing time.
+3. A request is sent to the **LLM API** (from `configs/config.yaml`).
+4. The agent **processes the response** and returns a  **structured JSON result** .
 
-Make sure you have Python **3.10+** installed.
+---
+
+## ⚙️ **Configuration Files**
+
+All configs are stored under `configs/`.
+
+### **📌 `configs/agents.yaml`**
+
+```yaml
+leopard_pont_des_arts_agent:
+  role: LeopardPontDesArtsAgent
+  goal: Compute crossing time in seconds.
+  backstory: >
+    No chain-of-thought; single pass approach. 
+    Your job is to calculate how long it takes for a leopard to cross the Pont des Arts bridge.
+```
+
+### **📌 `configs/prompts.yaml`**
+
+```yaml
+leopard_pont_des_arts_prompt: |
+  Given:
+  - **Leopard's Speed**: 58 km/h
+  - **Pont des Arts Bridge Length**: 155 meters
+
+  ### Task:
+  Compute the time in **seconds** for a leopard running at full speed to cross the Pont des Arts bridge.
+
+  Use the formula:
+  Time (seconds) = Distance (meters) / Speed (m/s)
+
+  Return response in **JSON format**:
+
+  ```json
+  {
+      "time_seconds": <numeric_value>,
+      "explanation": "<brief explanation>"
+  }
+```
+
+```
+
+### **📌 `configs/tasks.yaml`**
+```yaml
+leopard_task:
+  description: "How many seconds would it take for a leopard at full speed to run through Pont des Arts?"
+  expected_output: "Approximate time in seconds + brief reasoning"
+```
+
+### **📌 `configs/config.yaml`**
+
+```yaml
+llm:
+  model: "deepseek-r1-distill-qwen-14b"
+  api_url: "https://your-llm-url.com"
+  api_key: "your-api-key"
+```
+
+---
+
+## 🛠 **Setup & Installation**
+
+### 1️⃣ **Clone the repository**
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-repo/leopard_pontdesarts.git
-cd leopard_pontdesarts
+git clone https://github.com/rrbanda/crewai-examples.git
+cd crewai-examples/leopard_pontdesarts
+```
 
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate     # Windows
+### 2️⃣ **Create a Virtual Environment**
 
-# Install required dependencies
+```bash
+python3 -m venv venv
+source venv/bin/activate  # (On Windows, use `venv\Scripts\activate`)
+```
+
+### 3️⃣ **Install Dependencies**
+
+```bash
 pip install -r requirements.txt
 ```
 
-### **2️⃣ Configure Environment Variables**
-
-Create a `.env` file in the **project root directory** and add the following details:
-
-```ini
-LLM_API_URL="https://your-llm-api-url.com"
-LLM_MODEL="your-llm-model-name"
-LLM_API_KEY="your-secret-api-key"
-```
-
-Replace `"your-llm-api-url.com"`, `"your-llm-model-name"`, and `"your-secret-api-key"` with your actual API details.
-
 ---
 
-## **🚀 Running the AI Agent**
-
-Navigate to the project directory and run:
+## 🚀 **Run the Crew**
 
 ```bash
 python -m src.main
 ```
 
-**Expected Output:**
+🔹 This will initialize the CrewAI system and execute the Leopard Pont des Arts task.
+
+---
+
+## 📌 **Example Output**
 
 ```json
 {
   "time_seconds": 9.62,
-  "explanation": "The leopard's speed is converted to meters per second (16.111 m/s), and the bridge length (155 meters) is divided by this speed to get the time in seconds."
+  "explanation": "The leopard's speed is converted from km/h to m/s (58 km/h ≈ 16.111 m/s). Time is calculated by dividing the bridge length (155 meters) by the speed (16.111 m/s), resulting in approximately 9.62 seconds."
 }
 ```
 
 ---
 
-## **🧐 How It Works**
+## 🛠 **Debugging & Common Issues**
 
-### **1️⃣ Agents (src/agents.py)**
+### 🔴 **Config file not found**
 
-* **LeopardPontDesArtsAgent** is responsible for answering:
-  * *"How many seconds would it take for a leopard to cross the Pont des Arts bridge?"*
-* It fetches relevant data using **DuckDuckGo search** and interacts with an **LLM API** to generate a structured response.
+* Ensure all **YAML files exist** in the `configs/` folder.
+* Run:
+  ```bash
+  ls configs/
+  ```
 
-### **2️⃣ Tasks (src/tasks.py)**
+### 🔴 **LLM API errors**
 
-* Defines a **specific task** for the agent:
-  * **Computing the crossing time**
-  * Expecting an output format: `{"time_seconds": X.XX, "explanation": "..."}`
-
-### **3️⃣ LLM API Handler (src/llm.py)**
-
-* Calls the **LLM API** with a prompt.
-* **Extracts JSON** response from the AI-generated text.
-* **Retries** in case of failures.
-
-### **4️⃣ CrewAI Execution (src/main.py)**
-
-* **Defines the Crew (AI Workflow)**
-* Executes the defined **task**
-* Prints the  **final result in JSON format** .
+* Check if the **LLM API URL is correct** in `configs/config.yaml`.
+* Ensure your API key is **valid and has access** to the model.
 
 ---
 
-## **🔧 Troubleshooting**
+## 🏗 **Future Enhancements**
 
-### ❌ **ModuleNotFoundError: No module named 'src'**
-
-Run the script with `-m`:
-
-```bash
-python -m src.main
-```
-
-or ensure you're in the **correct directory** before running.
-
-### ❌ **ImportError: pydantic_core not found**
-
-Try reinstalling dependencies:
-
-```bash
-rm -rf venv
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### ❌ **LLM API not responding**
-
-* Ensure **LLM_API_URL** is correct in `.env`.
-* Check if the **API Key** is valid.
+* 🔹 **Dynamic agent creation** from YAML.
+* 🔹  **Multiple LLM model support** .
+* 🔹 **UI for visualization** of the leopard's run time.
 
 ---
 
-## **🎯 Next Steps**
+## 🤝 **Contributing**
 
-✅ **Customize the Task** – Modify `src/tasks.py` to test different speed/distance scenarios.
-
-✅ **Expand with New Agents** – Add another agent to compute results for  **cheetahs or humans** .
-
-✅ **Deploy on OpenShift AI** – Make it production-ready!
+* Feel free to submit **pull requests** or report **issues** [here](https://github.com/rrbanda/crewai-examples/issues).
 
 ---
 
-## **📌 Summary**
+## 📜 **License**
 
-This project provides an AI-powered **scientific calculator** 🧠 that:
-
-* **Searches online** for relevant data 🔍
-* **Interacts with an LLM API** for reasoning 🤖
-* **Outputs structured results** in JSON format 📝
-
-🎯 **🚀 Have fun experimenting and improving this AI workflow!** 🚀
+MIT License. See `LICENSE` for details. 🚀
