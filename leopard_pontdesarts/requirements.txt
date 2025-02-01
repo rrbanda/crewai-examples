@@ -1,6 +1,9 @@
 crewai
 langchain
+langchain_community
 requests
 pydantic
 python-dotenv
 pyyaml
+duckduckgo-search
+pygame

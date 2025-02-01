@@ -3,29 +3,16 @@ import json
 from crewai import Crew
 from src.tasks import get_leopard_task
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(level=logging.INFO)
 
-# Create Crew and Run Task
-leopard_task = get_leopard_task()
-
-crew = Crew(
-    agents=[leopard_task.agent],
-    tasks=[leopard_task],
-    verbose=True
-)
+task = get_leopard_task()
+crew = Crew(agents=[task.agent], tasks=[task], verbose=True)
 
 if __name__ == "__main__":
     result = crew.kickoff()
-
-    # Extract response correctly
-    response_text = result.raw if hasattr(result, "raw") else json.dumps({"error": "Unexpected response type"}, indent=2)
-
     try:
-        json_output = json.loads(response_text)
-        final_result = json.dumps(json_output, indent=2)
+        final_result = json.dumps(json.loads(result.raw), indent=2) if hasattr(result, "raw") else result.raw
     except json.JSONDecodeError:
-        final_result = response_text  # Print raw text if not JSON
-
+        final_result = result.raw
     print("\n=== FINAL CREW RESULT ===")
     print(final_result)
