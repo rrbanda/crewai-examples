@@ -1,18 +1,33 @@
 import logging
 import json
+import uvicorn
+import argparse
 from crewai import Crew
 from src.tasks import get_leopard_task
 
 logging.basicConfig(level=logging.INFO)
 
-task = get_leopard_task()
-crew = Crew(agents=[task.agent], tasks=[task], verbose=True)
+def run_crew():
+    """Run the agent in CLI mode"""
+    task = get_leopard_task()
+    crew = Crew(agents=[task.agent], tasks=[task], verbose=True)
+
+    result = crew.kickoff()
+
+    try:
+        final_result = json.loads(result.raw) if hasattr(result, "raw") else {"error": "Unexpected response"}
+    except json.JSONDecodeError:
+        final_result = {"error": "Invalid JSON response"}
+
+    print("\n=== FINAL CREW RESULT ===")
+    print(json.dumps(final_result, indent=2))
 
 if __name__ == "__main__":
-    result = crew.kickoff()
-    try:
-        final_result = json.dumps(json.loads(result.raw), indent=2) if hasattr(result, "raw") else result.raw
-    except json.JSONDecodeError:
-        final_result = result.raw
-    print("\n=== FINAL CREW RESULT ===")
-    print(final_result)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=["cli", "api"], default="cli", help="Run mode: cli (default) or api")
+    args = parser.parse_args()
+
+    if args.mode == "api":
+        uvicorn.run("src.api:app", host="0.0.0.0", port=8000, reload=True)
+    else:
+        run_crew()

@@ -7,3 +7,5 @@ python-dotenv
 pyyaml
 duckduckgo-search
 pygame
+fastapi
+uvicorn
