@@ -1,7 +1,7 @@
-llm:
-  api_url: "https://deepseek-r1-distill-qwen-14b-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443"
-  model: "deepseek-r1-distill-qwen-14b"
-  api_key: "yourapikey"
-
 formatter:
-  api_url: "http://0.0.0.0:8001/process"
+  api_url: "${FORMATTER_API_URL}"
+
+llm:
+  api_key: "${LLM_API_KEY}"
+  model_name: "deepseek-r1-distill-qwen-14b"
+  base_url: "${LLM_BASE_URL}"

@@ -1,175 +1,150 @@
-### **📌 Leopard Pont des Arts AI Agent API**
-
-This repository provides an AI-powered agent that computes how long it takes for a leopard to cross the Pont des Arts bridge, with both **raw JSON output** and **UI-friendly formatted output**.
-
----
-
-## **🚀 Features**
-- 🦁 **Leopard Crossing Time Calculation** → Uses an AI agent to compute crossing time.
-- 📡 **FastAPI-based REST API** → Exposes easy-to-use API endpoints.
-- 🎨 **UI-friendly Response Formatting** → Calls the external **Formatter API** at [`ai-agent-formatter`](https://github.com/rrbanda/ai-agent-formatter/tree/main) to transform responses into UI components.
-- 🔧 **Configurable Formatter API** → Loads formatter service URL dynamically from `config.yaml`.
+### **🚀 Leopard Pont Des Arts API**
+A FastAPI-based service leveraging CrewAI and a Large Language Model (LLM) for intelligent responses. Supports both **local development** and **Podman-based deployments**.
 
 ---
 
-## **📂 Folder Structure**
-```
-leopard_pontdesarts/
-│── src/
-│   ├── agents.py               # Defines LeopardPontDesArtsAgent
-│   ├── tasks.py                # Defines the agent task
-│   ├── llm.py                  # Handles LLM API calls
-│   ├── api.py                  # FastAPI application
-│   ├── config.yaml             # Configurations (Formatter & LLM)
-│── configs/
-│   ├── agents.yaml             # Agent configuration
-│   ├── prompts.yaml            # Prompt configuration
-│   ├── tasks.yaml              # Task configuration
-│── tests/
-│   ├── test_api.py             # Unit tests for API
-│── requirements.txt            # Required dependencies
-│── README.md                   # This documentation
-```
+## **📌 Features**
+✅ **LLM Integration** – Uses an external LLM API  
+✅ **FastAPI-based REST API** – Easily extendable endpoints  
+✅ **Environment Config Support** – Works with `.env` or Kubernetes `ConfigMap`  
+✅ **Podman Desktop Deployment** – Ready for local and containerized execution
 
 ---
 
-## **⚡ Installation & Setup**
+## **🛠️ Setup Instructions**
 
-### **1️⃣ Clone this repository**
-```sh
-git clone https://github.com/your-username/leopard_pontdesarts.git
+### **1️⃣ Local Development (Without Podman)**
+#### **🔹 Prerequisites**
+- **Python 3.11+**
+- **pip & virtualenv**
+
+#### **🔹 Install & Run**
+```bash
+# Clone the repository
+git clone https://github.com/your-repo/leopard_pontdesarts.git
 cd leopard_pontdesarts
-```
 
-### **2️⃣ Set up virtual environment**
-```sh
+# Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # On MacOS/Linux
-# or
-venv\Scripts\activate  # On Windows
-```
+source venv/bin/activate  # For Linux/macOS
+venv\Scripts\activate      # For Windows
 
-### **3️⃣ Install dependencies**
-```sh
-pip install --upgrade pip
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### **4️⃣ Configure API URLs**
-Modify `configs/config.yaml` to define the **Formatter API URL** and **LLM API URL**:
-```yaml
-llm:
-  api_url: "https://deepseek-r1-distill-qwen-14b-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443"
-  model: "deepseek-r1-distill-qwen-14b"
-  api_key: "YOUR_LLM_API_KEY"
+# Create a `.env` file with your API credentials
+cp .env.example .env
+nano .env  # Update API keys
 
-formatter:
-  api_url: "http://localhost:8001/process"  # ✅ Formatter API URL
-```
-
-### **5️⃣ Run the API**
-```sh
+# Run the API locally
 python -m src.main --mode api
 ```
-The API will start on **`http://0.0.0.0:8000`**.
 
----
-
-## **📡 API Endpoints**
-| **Endpoint** | **Purpose** | **Example Response** |
-|-------------|------------|----------------------|
-| **`GET /`** | Check if API is running | `{ "message": "Leopard Pont des Arts API is running!" }` |
-| **`GET /leopard-crossing`** | Returns **raw JSON** output from AI agent | `{ "time_seconds": 9.62, "explanation": "..." }` |
-| **`GET /leopard-crossing-ui`** | Returns **formatted UI response** via external formatter | `{ "ui_type": "table", "content": [...] }` |
-
----
-
-## **🖼️ Example API Calls**
-### **Raw JSON Response**
-```sh
-curl -X GET "http://localhost:8000/leopard-crossing"
-```
-**Response:**
-```json
-{
-  "time_seconds": 9.62,
-  "explanation": "The leopard's speed is converted from 58 km/h to 16.111 m/s. The time to cross 155 meters is 155 / 16.111 ≈ 9.62 sec."
-}
-```
-
-### **UI-Friendly Response**
-```sh
-curl -X GET "http://localhost:8000/leopard-crossing-ui"
-```
-**Response from Formatter:**
-```json
-{
-  "ui_type": "table",
-  "content": [
-    { "key": "time_seconds", "value": 9.62 },
-    { "key": "explanation", "value": "The leopard runs at 58 km/h, converted to 16.111 m/s. The crossing time is 155m / 16.111 m/s ≈ 9.62 sec." }
-  ]
-}
+#### **🔹 Test the API**
+```bash
+curl -X GET http://127.0.0.1:8000/
+curl -X GET http://127.0.0.1:8000/leopard-crossing
 ```
 
 ---
 
-## **🔗 Running the Formatter API**
-Before calling `/leopard-crossing-ui`, **ensure the Formatter API** is running.  
-The Formatter API is available at [`ai-agent-formatter`](https://github.com/rrbanda/ai-agent-formatter/tree/main).
+### **2️⃣ Run with Podman**
+#### **🔹 Prerequisites**
+- **[Podman Installed](https://podman.io/getting-started/installation)**
+- **Podman Desktop (Optional, for GUI management)**
 
-### **Steps to Run the Formatter API**
-1. **Clone the formatter repository**:
-   ```sh
-   git clone https://github.com/rrbanda/ai-agent-formatter.git
-   cd ai-agent-formatter
+#### **🔹 Build & Run with Podman**
+```bash
+# Build the container
+podman build -t quay.io/yourusername/leopard_pontdesarts:latest .
+
+# Run the container with environment variables
+podman run --env-file .env -p 8000:8000 quay.io/yourusername/leopard_pontdesarts:latest
+```
+
+---
+
+### **3️⃣ Deploy via Podman Desktop (Kube YAML)**
+#### **🔹 Steps**
+1. **Create the Pod & ConfigMap** using the provided `pod.yaml`
+2. **Apply YAML in Podman Desktop**
+   ```bash
+   podman kube play pod.yaml
+   ```
+3. **Check Running Containers**
+   ```bash
+   podman ps -a
    ```
 
-2. **Set up and run the API**:
-   ```sh
-   python -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
-   ```
-
-3. **Verify it’s running**:
-   ```sh
-   curl -X POST "http://localhost:8001/process" \
-   -H "Content-Type: application/json" \
-   -d '{"format": "json", "data": {"time_seconds": 9.62, "explanation": "The leopard runs at 58 km/h, converted to 16.111 m/s. The crossing time is 155m / 16.111 m/s ≈ 9.62 sec."}}'
-   ```
-   **Expected Response:**
-   ```json
-   {
-     "ui_type": "table",
-     "content": [
-       { "key": "time_seconds", "value": 9.62 },
-       { "key": "explanation", "value": "The leopard runs at 58 km/h, converted to 16.111 m/s. The crossing time is 155m / 16.111 m/s ≈ 9.62 sec." }
-     ]
-   }
-   ```
-
----
-
-## **🛠️ Running Tests**
-Run unit tests to ensure everything works:
-```sh
-pytest tests/
+#### **🔹 Access the API**
+```bash
+curl -X GET http://localhost:8000/
+curl -X GET http://localhost:8000/leopard-crossing
 ```
 
 ---
 
-## **🚀 Next Steps**
-- 🛠️ **Integrate UI** → Use `/leopard-crossing-ui` for a frontend-friendly response.
-- 📊 **Add support for Markdown Output** → Extend the Formatter API to handle `markdown` responses.
-- 🌍 **Deploy API** → Run on **AWS Lambda**, **OpenShift**, or **Docker**.
+## **📄 API Endpoints**
+| Method | Endpoint                   | Description                         |
+|--------|----------------------------|-------------------------------------|
+| GET    | `/`                        | API health check                   |
+| GET    | `/leopard-crossing`        | Get raw LLM response               |
+| GET    | `/leopard-crossing-ui`     | Get formatted response via service |
 
 ---
 
-## **📌 Credits**
-- **LLM & AI Agent** → [`crewai`](https://github.com/joaomdmoura/crewai)
-- **UI Formatter** → [`ai-agent-formatter`](https://github.com/rrbanda/ai-agent-formatter)
-- **Built With** → **FastAPI**, **Requests**, **PyYAML**, **CrewAI**
+## **📦 Environment Configuration**
+The app reads values from `.env` or a `ConfigMap`.
+
+### **✅ `.env` Example**
+```ini
+LLM_BASE_URL="https://your-llm-api.com"
+LLM_MODEL="your-llm-model"
+LLM_API_KEY="your-secret-key"  # Replace with actual key
+FORMATTER_API_URL="http://localhost:8001/process"
+CHROMA_DB_PATH="/opt/app-root/src/.local/chroma_db"
+LOG_LEVEL="INFO"
+```
+
+### **✅ `ConfigMap` Equivalent (for Kubernetes/Podman)**
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: leopard-config
+data:
+  LLM_BASE_URL: "https://your-llm-api.com"
+  LLM_MODEL: "your-llm-model"
+  LLM_API_KEY: "your-secret-key"
+  FORMATTER_API_URL: "http://localhost:8001/process"
+  CHROMA_DB_PATH: "/opt/app-root/src/.local/chroma_db"
+  LOG_LEVEL: "INFO"
+```
+
+---
+
+## **🚀 Troubleshooting**
+### **Port Not Accessible?**
+- Ensure **`hostPort: 8000`** is set in `pod.yaml`
+- Check running containers:
+  ```bash
+  podman ps -a
+  ```
+
+### **LLM API Errors?**
+- Verify `.env` or `ConfigMap` **has correct API key**
+- Run:
+  ```bash
+  podman logs leopard-crossing-api
+  ```
+
+---
+
+## **🎯 Summary**
+| Mode               | Command |
+|--------------------|---------|
+| **Local (No Podman)** | `python -m src.main --mode api` |
+| **Podman CLI** | `podman run --env-file .env -p 8000:8000 quay.io/yourusername/leopard_pontdesarts:latest` |
+| **Podman Desktop (Kube)** | `podman kube play pod.yaml` |
 
 ---
