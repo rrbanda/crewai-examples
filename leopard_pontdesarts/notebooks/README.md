@@ -1,8 +1,4 @@
-Sure! Below is the latest **`README.md`** content that you can commit to your **CrewAI Learning Journey** repository.
 
----
-
-```md
 # 🚀 CrewAI Learning Journey: From Basics to OpenShift Deployment
 
 This repository provides a **structured learning path** for mastering **CrewAI**, starting from a simple AI agent to a **production-ready deployment on OpenShift**.
@@ -111,13 +107,4 @@ We welcome **issues, PRs, and discussions** to improve this repo! 🚀
 
 📌 **Maintained by:** [@rrbanda](https://github.com/rrbanda)
 ```
-
----
-
-### ✅ **Key Features in This README:**
-- **Clear Learning Flow** (Step-by-step progression)
-- **Notebook Execution Guide** (Easy to follow)
-- **Deployment Options** (Local, FastAPI, OpenShift)
-- **CrewAI Concepts Explained** (Beginner to Advanced)
-- **Contribution Guidelines** (Encourage collaboration)
 
