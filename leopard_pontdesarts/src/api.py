@@ -11,13 +11,13 @@ from dotenv import load_dotenv
 # ✅ Load .env for local development
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
 # ✅ Load configuration from environment variables or YAML file
-CONFIG_FILE_PATH = os.getenv("CONFIG_FILE", "/app/configs/config.yaml")  # Default in container
+CONFIG_FILE_PATH = os.getenv("CONFIG_FILE", "/app/configs/config.yaml")
 
 config = {}
 if os.path.exists(CONFIG_FILE_PATH):
@@ -40,49 +40,70 @@ def get_config_value(key_path: str, env_var: str, default=None):
         if isinstance(temp_config, dict):
             temp_config = temp_config.get(key, None)
         else:
-            return default  # Return default if path is invalid
+            return default
 
     return temp_config if temp_config is not None else default
 
-# ✅ Load API and Formatter URLs
-LLM_API_KEY = get_config_value("llm.api_key", "LLM_API_KEY")
+# ✅ Load LLM API configurations
+LLM_API_KEY = get_config_value("llm.api_key", "LLM_API_KEY", None)  # Optional API key
 LLM_MODEL_NAME = get_config_value("llm.model_name", "LLM_MODEL", "deepseek-r1-distill-qwen-14b")
 LLM_BASE_URL = get_config_value("llm.base_url", "LLM_BASE_URL")
 FORMATTER_URL = get_config_value("formatter.api_url", "FORMATTER_API_URL", "http://localhost:8001/process")
 
 # ✅ Debug Logs
+logger.info(f"🔍 Loaded LLM_MODEL: {LLM_MODEL_NAME}")
 logger.info(f"🔍 Loaded LLM_BASE_URL: {LLM_BASE_URL}")
-logger.info(f"🔍 Loaded LLM_API_KEY: {LLM_API_KEY}")
+logger.info(f"🔍 LLM_API_KEY: {'SET' if LLM_API_KEY else 'NOT SET'}")
 
 @app.get("/")
 def home():
+    """Basic home endpoint."""
     return {"message": "Leopard Pont des Arts API is running!"}
+
+@app.get("/health")
+def health():
+    """Health check endpoint to verify API readiness."""
+    return {"status": "ok"}
 
 @app.get("/leopard-crossing")
 def leopard_crossing():
-    """Default endpoint: Returns raw agent response."""
+    """Returns raw agent response."""
     return execute_leopard_task()
 
 @app.get("/leopard-crossing-ui")
 def leopard_crossing_ui():
-    """Returns agent response formatted for UI using the external formatter."""
+    """Returns formatted agent response via Formatter API."""
     raw_result = execute_leopard_task()
     return call_formatter(raw_result)
 
+def call_formatter(data):
+    """Send response to the external formatter service if available."""
+    payload = {"format": "json", "data": data}
+    try:
+        response = requests.post(FORMATTER_URL, json=payload, headers={"Content-Type": "application/json"}, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"❌ Formatter service request error: {e}")
+        return data  # Fallback to raw response
+
 def execute_leopard_task():
-    """Runs the agent and returns computed response."""
-    if not LLM_BASE_URL or not LLM_API_KEY:
-        return {"error": "Missing LLM API URL or API key in config"}
+    """Runs the CrewAI agent and returns computed response."""
+    if not LLM_BASE_URL:
+        return {"error": "Missing LLM API URL in config"}
 
     task = get_leopard_task()
     crew = Crew(agents=[task.agent], tasks=[task], verbose=True)
-    result = crew.kickoff()
 
     try:
+        result = crew.kickoff()
         return json.loads(result.raw) if hasattr(result, "raw") else {"error": "Unexpected response"}
     except json.JSONDecodeError:
-        logger.error("❌ Invalid JSON response from Crew")
+        logger.error("❌ Invalid JSON response from CrewAI")
         return {"error": "Invalid JSON response"}
+    except Exception as e:
+        logger.error(f"❌ CrewAI Execution Error: {e}")
+        return {"error": "Internal error while executing task"}
 
 # ✅ Ensure `app` is available when running `uvicorn src.api:app`
 if __name__ == "__main__":

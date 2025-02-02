@@ -1,7 +1,8 @@
 formatter:
   api_url: "${FORMATTER_API_URL}"
 
-llm:
-  api_key: "${LLM_API_KEY}"
-  model_name: "deepseek-r1-distill-qwen-14b"
-  base_url: "${LLM_BASE_URL}"
+chroma_db:
+  path: "${CHROMA_DB_PATH}"
+
+logging:
+  level: "${LOG_LEVEL}"

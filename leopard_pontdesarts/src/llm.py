@@ -8,8 +8,8 @@ from time import sleep
 
 logger = logging.getLogger(__name__)
 
-# ✅ Load YAML config (for ConfigMap support)
-CONFIG_FILE_PATH = os.getenv("CONFIG_FILE", "configs/config.yaml")
+# ✅ Load LLM Provider Config
+CONFIG_FILE_PATH = "configs/llm_provider_config.yaml"
 config = {}
 
 if os.path.exists(CONFIG_FILE_PATH):
@@ -27,39 +27,45 @@ def extract_json(response_text):
 
 class CustomLLM:
     def __init__(self):
-        """Load LLM Configuration from Environment Variables or Config File"""
-        self.model = os.getenv("LLM_MODEL", config.get("llm", {}).get("model_name", "default-model"))
+        """Load LLM Configuration Dynamically"""
+        provider = os.getenv("LLM_PROVIDER", "openai")  # Default to OpenAI
+        llm_config = config.get("llms", {}).get(provider, {})
 
-        # ✅ Fix: Remove unwanted quotes from LLM_BASE_URL
-        self.base_url = os.getenv("LLM_BASE_URL", config.get("llm", {}).get("base_url", "")).strip().strip('"').rstrip("/")
-        self.api_key = os.getenv("LLM_API_KEY", config.get("llm", {}).get("api_key", None))
+        self.model_name = os.getenv("LLM_MODEL", llm_config.get("model_name", "default-model"))
+        self.base_url = os.getenv("LLM_BASE_URL", llm_config.get("base_url", "")).strip().strip('"').rstrip("/")
+        self.api_key = os.getenv("LLM_API_KEY", llm_config.get("api_key", None))
         self.max_retries = 3
 
-        # ✅ Log the loaded values (for debugging)
-        logger.info(f"✅ Initialized LLM with model: {self.model}, URL: {self.base_url}")
+        logger.info(f"✅ Using LLM Provider: {provider} | Model: {self.model_name} | URL: {self.base_url}")
 
         if not self.base_url:
-            logger.error("❌ LLM Base URL is missing. Check `LLM_BASE_URL` in .env or config.yaml")
-        if not self.api_key:
+            logger.error("❌ LLM Base URL is missing. Check `.env` or `llm_provider_config.yaml`")
+        if not self.api_key and provider not in ["mistral", "ollama"]:
             logger.warning("⚠️ No LLM API Key provided. Some endpoints may require authentication.")
 
     def infer(self, prompt: str) -> str:
-        """Send a prompt to the LLM API and return JSON response."""
+        """Send a prompt to the selected LLM API and return JSON response."""
         if not self.base_url:
             logger.error("❌ No LLM API URL configured.")
             return json.dumps({"error": "Missing LLM API URL in config"})
 
-        # ✅ Ensure proper URL formatting
-        url = f"{self.base_url}/v1/chat/completions"
+        # ✅ Handle Special API Formats
+        if "ollama" in self.base_url:
+            url = f"{self.base_url}/api/generate"
+            payload = {"model": self.model_name, "prompt": prompt}
+        elif "gemini" in self.base_url:
+            url = f"{self.base_url}/models/{self.model_name}:generateContent?key={self.api_key}"
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        else:
+            url = f"{self.base_url}/v1/chat/completions"
+            payload = {
+                "model": self.model_name,
+                "messages": [{"role": "system", "content": "Return only JSON output. No explanations."}, {"role": "user", "content": prompt}],
+                "max_tokens": 1000,
+                "temperature": 0.1,
+            }
 
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"} if self.api_key else {}
-
-        payload = {
-            "model": self.model,
-            "messages": [{"role": "system", "content": "Return only JSON output. No explanations."}, {"role": "user", "content": prompt}],
-            "max_tokens": 1000,
-            "temperature": 0.1,
-        }
 
         for attempt in range(1, self.max_retries + 1):
             try:

@@ -8,7 +8,7 @@ from src.tasks import get_leopard_task
 logging.basicConfig(level=logging.INFO)
 
 def run_crew():
-    """Run the agent in CLI mode."""
+    """Run the CrewAI agent in CLI mode."""
     task = get_leopard_task()
     crew = Crew(agents=[task.agent], tasks=[task], verbose=True)
 
