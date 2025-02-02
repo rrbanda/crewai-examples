@@ -19,11 +19,11 @@ if os.path.exists(CONFIG_FILE_PATH):
     except FileNotFoundError as e:
         logger.error(f"❌ Config file not found: {e}")
 
-# ✅ Extract JSON helper function
+# ✅ Extract JSON from response function
 def extract_json(response_text):
-    """Extract JSON part from LLM response"""
+    """Extract JSON part from LLM response (handles Granite-style formatting)."""
     match = re.search(r'```json\n(.*?)\n```', response_text, re.DOTALL)
-    return match.group(1) if match else None
+    return match.group(1) if match else response_text  # Return full response if no match
 
 class CustomLLM:
     def __init__(self):
@@ -76,13 +76,14 @@ class CustomLLM:
                 logger.info(f"✅ Raw LLM API Response: {json.dumps(data, indent=2)}")
 
                 choices = data.get("choices", [])
-                response_text = choices[0].get("message", {}).get("content", "").strip() if choices else ""
+                if choices:
+                    response_text = choices[0].get("message", {}).get("content", "").strip()
 
-                if not response_text:
-                    return json.dumps({"error": "Empty response from LLM"})
+                    # ✅ Extract JSON if response contains Granite-style formatting
+                    json_part = extract_json(response_text)
+                    return json.dumps(json.loads(json_part), indent=2) if json_part else json.dumps({"error": "Invalid JSON received from LLM"})
 
-                json_part = extract_json(response_text)
-                return json.dumps(json.loads(json_part), indent=2) if json_part else json.dumps({"error": "Invalid JSON received from LLM"})
+                return json.dumps({"error": "Empty response from LLM"})
 
             except requests.exceptions.RequestException as e:
                 logger.error(f"❌ LLM API Error on attempt {attempt}: {e}")
