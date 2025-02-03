@@ -1,13 +1,25 @@
-### **🚀 Leopard Pont Des Arts API**
-A FastAPI-based service leveraging CrewAI and a Large Language Model (LLM) for intelligent responses. Supports both **local development** and **Podman-based deployments**.
+# **🚀 Leopard Pont Des Arts API**
+
+**Leopard Pont Des Arts** is an **AI-powered agent** built using **CrewAI**, integrating **real-time web search** and **large language models (LLMs)** to generate intelligent responses.
+
+This AI assistant:  
+✅ **Fetches real-time information** via **DuckDuckGo search**  
+✅ **Processes search & input data using an LLM** (Providers supported such as vLLM, OpenAI, Ollama, etc.)  
+✅ **Uses CrewAI for structured AI workflows**  
+✅ **Supports multiple deployment options** (Local, Podman, OpenShift)
+
+It is designed for **automated research, AI-enhanced decision-making, and knowledge retrieval**.
 
 ---
 
 ## **📌 Features**
-✅ **LLM Integration** – Uses an external LLM API  
-✅ **FastAPI-based REST API** – Easily extendable endpoints  
+✅ **Multi-LLM Provider Support** – Works with OpenAI, vLLM, Ollama, DeepSeek, Cohere, Mistral, Anthropic, Gemini, Meta, and more  
+✅ **CrewAI Agent Framework** – Implements structured AI-driven responses  
+✅ **DuckDuckGo Search Integration** – Enhances AI answers with **live search results**  
+✅ **FastAPI-based REST API** – Easily extendable for additional AI workflows  
 ✅ **Environment Config Support** – Works with `.env` or Kubernetes `ConfigMap`  
-✅ **Podman Desktop Deployment** – Ready for local and containerized execution
+✅ **Podman Desktop & OpenShift Ready** – Supports both **containerized and cloud-based deployments**  
+✅ **Works on Any OS** – Uses **virtual environments (venv)** and **Podman**, avoiding OS dependencies
 
 ---
 
@@ -26,24 +38,24 @@ cd leopard_pontdesarts
 
 # Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # For Linux/macOS
-venv\Scripts\activate      # For Windows
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate      # Windows
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Create a `.env` file with your API credentials
 cp .env.example .env
-nano .env  # Update API keys
+nano .env  # Update API keys and model details
 
-# Run the API locally
-python -m src.main --mode api
+# Run the API on port 8082
+PORT=8082 python -m src.main --mode api
 ```
 
-#### **🔹 Test the API**
+#### **🔹 Test the API (cURL Examples)**
 ```bash
-curl -X GET http://127.0.0.1:8000/
-curl -X GET http://127.0.0.1:8000/leopard-crossing
+curl -X GET http://127.0.0.1:8082/
+curl -X GET http://127.0.0.1:8082/leopard-crossing
 ```
 
 ---
@@ -58,8 +70,15 @@ curl -X GET http://127.0.0.1:8000/leopard-crossing
 # Build the container
 podman build -t quay.io/yourusername/leopard_pontdesarts:latest .
 
-# Run the container with environment variables
-podman run --env-file .env -p 8000:8000 quay.io/yourusername/leopard_pontdesarts:latest
+# Run the container with .env file (Default Port 8000)
+podman run --env-file .env -p 8082:8000 quay.io/yourusername/leopard_pontdesarts:latest
+
+# OR Run with inline -e parameters (Without .env)
+podman run -p 8082:8000 \
+  -e LLM_PROVIDER="vllm" \
+  -e LLM_BASE_URL="http://localhost:8000" \
+  -e LLM_MODEL="/var/home/instruct/.cache/instructlab/models/Qwen/Qwen2.5-Coder-32B-Instruct" \
+  quay.io/yourusername/leopard_pontdesarts:latest
 ```
 
 ---
@@ -78,8 +97,8 @@ podman run --env-file .env -p 8000:8000 quay.io/yourusername/leopard_pontdesarts
 
 #### **🔹 Access the API**
 ```bash
-curl -X GET http://localhost:8000/
-curl -X GET http://localhost:8000/leopard-crossing
+curl -X GET http://localhost:8082/
+curl -X GET http://localhost:8082/leopard-crossing
 ```
 
 ---
@@ -88,8 +107,8 @@ curl -X GET http://localhost:8000/leopard-crossing
 | Method | Endpoint                   | Description                         |
 |--------|----------------------------|-------------------------------------|
 | GET    | `/`                        | API health check                   |
-| GET    | `/leopard-crossing`        | Get raw LLM response               |
-| GET    | `/leopard-crossing-ui`     | Get formatted response via service |
+| GET    | `/leopard-crossing`        | Retrieves AI-generated response    |
+| GET    | `/leopard-crossing-ui`     | Fetches a structured response via UI |
 
 ---
 
@@ -98,9 +117,10 @@ The app reads values from `.env` or a `ConfigMap`.
 
 ### **✅ `.env` Example**
 ```ini
-LLM_BASE_URL="https://your-llm-api.com"
-LLM_MODEL="your-llm-model"
-LLM_API_KEY="your-secret-key"  # Replace with actual key
+LLM_PROVIDER="vllm"  # Change to "openai", "ollama", etc.
+LLM_BASE_URL="http://localhost:8000"
+LLM_MODEL="/var/home/instruct/.cache/instructlab/models/Qwen/Qwen2.5-Coder-32B-Instruct"
+LLM_API_KEY="your-secret-key"  # If required
 FORMATTER_API_URL="http://localhost:8001/process"
 CHROMA_DB_PATH="/opt/app-root/src/.local/chroma_db"
 LOG_LEVEL="INFO"
@@ -113,8 +133,9 @@ kind: ConfigMap
 metadata:
   name: leopard-config
 data:
-  LLM_BASE_URL: "https://your-llm-api.com"
-  LLM_MODEL: "your-llm-model"
+  LLM_PROVIDER: "vllm"
+  LLM_BASE_URL: "http://localhost:8000"
+  LLM_MODEL: "/var/home/instruct/.cache/instructlab/models/Qwen/Qwen2.5-Coder-32B-Instruct"
   LLM_API_KEY: "your-secret-key"
   FORMATTER_API_URL: "http://localhost:8001/process"
   CHROMA_DB_PATH: "/opt/app-root/src/.local/chroma_db"
@@ -125,7 +146,7 @@ data:
 
 ## **🚀 Troubleshooting**
 ### **Port Not Accessible?**
-- Ensure **`hostPort: 8000`** is set in `pod.yaml`
+- Ensure **`hostPort: 8082`** is set in `pod.yaml`
 - Check running containers:
   ```bash
   podman ps -a
@@ -143,8 +164,9 @@ data:
 ## **🎯 Summary**
 | Mode               | Command |
 |--------------------|---------|
-| **Local (No Podman)** | `python -m src.main --mode api` |
-| **Podman CLI** | `podman run --env-file .env -p 8000:8000 quay.io/yourusername/leopard_pontdesarts:latest` |
+| **Local (No Podman)** | `PORT=8082 python -m src.main --mode api` |
+| **Podman CLI (Using .env)** | `podman run --env-file .env -p 8082:8000 quay.io/yourusername/leopard_pontdesarts:latest` |
+| **Podman CLI (Inline -e Variables)** | `podman run -p 8082:8000 -e LLM_PROVIDER="vllm" -e LLM_BASE_URL="http://localhost:8000" -e LLM_MODEL="..." quay.io/yourusername/leopard_pontdesarts:latest` |
 | **Podman Desktop (Kube)** | `podman kube play pod.yaml` |
 
 ---
