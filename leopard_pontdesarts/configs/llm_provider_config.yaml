@@ -1,45 +1,8 @@
+#  dynamic from .env
+
 llms:
-  deepseek:
-    base_url: "https://deepseek-r1-distill-qwen-14b-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com"
-    model_name: "deepseek-r1-distill-qwen-14b"
+  default:
+    provider: "${LLM_PROVIDER}"  # Now dynamic from .env
+    base_url: "${LLM_BASE_URL}"
+    model_name: "${LLM_MODEL}"
     api_key: "${LLM_API_KEY}"
-
-  openai:
-    base_url: "https://api.openai.com"
-    model_name: "gpt-4o"
-    api_key: "${LLM_API_KEY}"
-
-  mistral:
-    base_url: "https://api.mistral.ai"
-    model_name: "mistral-large"
-    api_key: "${LLM_API_KEY}"
-
-  cohere:
-    base_url: "https://api.cohere.ai"
-    model_name: "command-r"
-    api_key: "${LLM_API_KEY}"
-
-  anthropic:
-    base_url: "https://api.anthropic.com"
-    model_name: "claude-3-opus"
-    api_key: "${LLM_API_KEY}"
-
-  gemini:
-    base_url: "https://generativelanguage.googleapis.com/v1"
-    model_name: "gemini-1.5-pro"
-    api_key: "${LLM_API_KEY}"
-
-  meta:
-    base_url: "https://api.meta.ai"
-    model_name: "llama-3-8b"
-    api_key: "${LLM_API_KEY}"
-
-  granite:
-    base_url: "https://api.granite.ibm.com"
-    model_name: "granite-13b"
-    api_key: "${LLM_API_KEY}"
-
-  ollama:
-    base_url: "http://localhost:11434"
-    model_name: "mistral"  # Change to your locally installed model
-    api_key: "{LLM_API_KEY"

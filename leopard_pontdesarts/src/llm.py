@@ -22,7 +22,7 @@ if os.path.exists(CONFIG_FILE_PATH):
 
 # ✅ Extract JSON from response function
 def extract_json(response_text):
-    """Extract JSON part from LLM response (handles Granite-style formatting)."""
+    """Extract JSON part from LLM response (handles JSON inside markdown formatting)."""
     match = re.search(r'```json\n(.*?)\n```', response_text, re.DOTALL)
     if match:
         return match.group(1)  # Extract JSON block
@@ -38,8 +38,8 @@ def extract_json(response_text):
 class CustomLLM:
     def __init__(self):
         """Load LLM Configuration Dynamically"""
-        self.provider = os.getenv("LLM_PROVIDER", "openai")  # Default to OpenAI
-        llm_config = config.get("llms", {}).get(self.provider, {})
+        self.provider = os.getenv("LLM_PROVIDER", "default")  # Get from .env
+        llm_config = config.get("llms", {}).get("default", {})
 
         self.model_name = os.getenv("LLM_MODEL", llm_config.get("model_name", "default-model"))
         self.base_url = os.getenv("LLM_BASE_URL", llm_config.get("base_url", "")).strip().strip('"').rstrip("/")
@@ -54,7 +54,7 @@ class CustomLLM:
 
         if not self.base_url:
             logger.error("❌ LLM Base URL is missing. Check `.env` or `llm_provider_config.yaml`")
-        if not self.api_key and self.provider not in ["mistral", "ollama"]:
+        if not self.api_key and self.provider not in ["mistral", "ollama", "vllm"]:
             logger.warning("⚠️ No LLM API Key provided. Some endpoints may require authentication.")
 
     def infer(self, prompt: str) -> str:
@@ -63,8 +63,8 @@ class CustomLLM:
             logger.error("❌ No LLM API URL configured.")
             return json.dumps({"error": "Missing LLM API URL in config"})
 
-        # ✅ Detect Qwen (vLLM) API Call (uses `/v1/completions` and `prompt`)
-        if "/var/home/instruct/.cache/instructlab/models/" in self.model_name:
+        # ✅ Detect vLLM API Call (Qwen runs on vLLM)
+        if self.provider == "vllm":
             url = f"{self.base_url}/v1/completions"
             payload = {
                 "model": self.model_name,
@@ -72,10 +72,10 @@ class CustomLLM:
                 "temperature": 0.1,
                 "max_tokens": 1000,
             }
-        elif "ollama" in self.base_url:
+        elif self.provider == "ollama":
             url = f"{self.base_url}/api/generate"
             payload = {"model": self.model_name, "prompt": prompt}
-        elif "gemini" in self.base_url:
+        elif self.provider == "gemini":
             url = f"{self.base_url}/models/{self.model_name}:generateContent?key={self.api_key}"
             payload = {"contents": [{"parts": [{"text": prompt}]}]}
         else:
@@ -105,8 +105,8 @@ class CustomLLM:
 
                 logger.info(f"✅ Raw LLM API Response: {json.dumps(data, indent=2)}")
 
-                # ✅ Fix: Parse response correctly for Qwen vLLM
-                if "/var/home/instruct/.cache/instructlab/models/" in self.model_name:
+                # ✅ Fix: Parse response correctly for vLLM (Qwen)
+                if self.provider == "vllm":
                     return json.dumps({"text": data["choices"][0]["text"].strip()}, indent=2)
 
                 choices = data.get("choices", [])
