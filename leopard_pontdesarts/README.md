@@ -2,24 +2,24 @@
 
 **Leopard Pont Des Arts** is an **AI-powered agent** built using **CrewAI**, integrating **real-time web search** and **large language models (LLMs)** to generate intelligent responses.
 
-This AI assistant:  
-✅ **Fetches real-time information** via **DuckDuckGo search**  
-✅ **Processes search & input data using an LLM** (Providers supported such as vLLM, OpenAI, Ollama, etc.)  
-✅ **Uses CrewAI for structured AI workflows**  
-✅ **Supports multiple deployment options** (Local, Podman, OpenShift)
+This AI assistant:
+- ✅ **Fetches real-time information** via **DuckDuckGo search**
+- ✅ **Processes search & input data using an LLM** (Supports vLLM, OpenAI, Ollama, DeepSeek, and more)
+- ✅ **Uses CrewAI for structured AI workflows**
+- ✅ **Supports multiple deployment options** (Local, Podman, OpenShift)
 
 It is designed for **automated research, AI-enhanced decision-making, and knowledge retrieval**.
 
 ---
 
 ## **📌 Features**
-✅ **Multi-LLM Provider Support** – Works with OpenAI, vLLM, Ollama, DeepSeek, Cohere, Mistral, Anthropic, Gemini, Meta, and more  
-✅ **CrewAI Agent Framework** – Implements structured AI-driven responses  
-✅ **DuckDuckGo Search Integration** – Enhances AI answers with **live search results**  
-✅ **FastAPI-based REST API** – Easily extendable for additional AI workflows  
-✅ **Environment Config Support** – Works with `.env` or Kubernetes `ConfigMap`  
-✅ **Podman Desktop & OpenShift Ready** – Supports both **containerized and cloud-based deployments**  
-✅ **Works on Any OS** – Uses **virtual environments (venv)** and **Podman**, avoiding OS dependencies
+- ✅ **Multi-LLM Provider Support** – Works with OpenAI, vLLM, Ollama, DeepSeek, Cohere, Mistral, Anthropic, Gemini, Meta, and more
+- ✅ **CrewAI Agent Framework** – Implements structured AI-driven responses
+- ✅ **DuckDuckGo Search Integration** – Enhances AI answers with **live search results**
+- ✅ **FastAPI-based REST API** – Easily extendable for additional AI workflows
+- ✅ **Environment Config Support** – Works with `.env` or Kubernetes `ConfigMap`
+- ✅ **Podman Desktop & OpenShift Ready** – Supports both **containerized and cloud-based deployments**
+- ✅ **Works on Any OS** – Uses **virtual environments (venv)** and **Podman**, avoiding OS dependencies
 
 ---
 
@@ -70,10 +70,10 @@ curl -X GET http://127.0.0.1:8082/leopard-crossing
 # Build the container
 podman build -t quay.io/yourusername/leopard_pontdesarts:latest .
 
-# Run the container with .env file (Default Port 8000)
+# Run the container with .env file (Port 8082)
 podman run --env-file .env -p 8082:8000 quay.io/yourusername/leopard_pontdesarts:latest
 
-# OR Run with inline -e parameters (Without .env)
+# OR Run with inline -e parameters
 podman run -p 8082:8000 \
   -e LLM_PROVIDER="vllm" \
   -e LLM_BASE_URL="http://localhost:8000" \
@@ -144,20 +144,50 @@ data:
 
 ---
 
-## **🚀 Troubleshooting**
-### **Port Not Accessible?**
-- Ensure **`hostPort: 8082`** is set in `pod.yaml`
-- Check running containers:
-  ```bash
-  podman ps -a
-  ```
+## **🚀 Example Run Output**
+Below is an example output when running the application using **Podman** with the **Ollama LLM provider** and a locally hosted model.
 
-### **LLM API Errors?**
-- Verify `.env` or `ConfigMap` **has correct API key**
-- Run:
-  ```bash
-  podman logs leopard-crossing-api
-  ```
+### **🔹 Run the Application with Podman**
+```bash
+podman run -p 8082:8000 \
+  -e LLM_PROVIDER="ollama" \
+  -e LLM_BASE_URL="http://localhost:8000" \
+  -e LLM_MODEL="/var/home/instruct/.cache/instructlab/models/Qwen/Qwen2.5-Coder-32B-Instruct" \
+  quay.io/yourusername/leopard_pontdesarts:latest
+```
+
+### **🔹 Console Output**
+```
+2025-02-03 01:10:27,748 - INFO - 🔍 Loaded LLM_MODEL: /var/home/instruct/.cache/instructlab/models/Qwen/Qwen2.5-Coder-32B-Instruct
+2025-02-03 01:10:27,749 - INFO - 🔍 Loaded LLM_BASE_URL: http://localhost:8000
+2025-02-03 01:10:27,749 - INFO - 🔍 LLM_API_KEY: SET
+INFO:   Started server process [1]
+...
+2025-02-03 01:10:44,079 - INFO - ✅ Using LLM Provider: ollama | Model: /var/home/instruct/.cache/instructlab/models/Qwen/Qwen2.5-Coder-32B-Instruct
+...
+```
+
+### **🔹 LLM API Response**
+```json
+{
+  "time_seconds": 9.44,
+  "explanation": "The time taken for a leopard running at 58 km/h to cross a 155-meter bridge is calculated by converting the speed to m/s and then using the formula Time = Distance / Speed."
+}
+```
+
+### **🔹 API Call Example**
+Once the application is running, you can test the `/leopard-crossing` API endpoint:
+```bash
+curl -X GET http://127.0.0.1:8082/leopard-crossing
+```
+
+Expected **response:**
+```json
+{
+  "time_seconds": 9.44,
+  "explanation": "The time taken for a leopard running at 58 km/h to cross a 155-meter bridge is calculated by converting the speed to m/s and then using the formula Time = Distance / Speed."
+}
+```
 
 ---
 
@@ -170,3 +200,4 @@ data:
 | **Podman Desktop (Kube)** | `podman kube play pod.yaml` |
 
 ---
+
