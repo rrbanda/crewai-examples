@@ -52,4 +52,6 @@ USER appuser
 EXPOSE 8000
 
 # Set default command
-CMD ["python", "-m", "src.main", "--mode", "api"]
+# CMD ["python", "-m", "src.main", "--mode", "api"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
