@@ -27,6 +27,12 @@ ENV LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 ENV PATH="/usr/local/bin:$PATH"
 RUN python3 -c "import sqlite3; print('SQLite version:', sqlite3.sqlite_version)"  # Debugging check
 
+# ✅ Set up a writable directory for SQLite (CrewAI Storage)
+ENV CREWAI_STORAGE_PATH="/opt/app-root/src/.crewai"
+
+# Ensure writable directory for SQLite
+RUN mkdir -p $CREWAI_STORAGE_PATH && chmod -R 775 $CREWAI_STORAGE_PATH
+
 # ✅ Ensure group and user exist before adding, **but don't force UID 1001**
 RUN groupadd -r appgroup || true && \
     useradd -r -g appgroup appuser || true
@@ -51,7 +57,5 @@ USER appuser
 # Expose port for FastAPI
 EXPOSE 8000
 
-# Set default command
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
-
-
+# Set default command for running the API
+CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]
