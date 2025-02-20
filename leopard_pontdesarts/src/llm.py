@@ -7,72 +7,95 @@ from time import sleep
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)  # Ensure logs are visible
 
 class CustomLLM:
     def __init__(self):
-        """Load LLM Configuration Dynamically from OpenShift ConfigMap"""
-        
-        # Get the active LLM provider from the ConfigMap
-        self.provider = os.getenv("ACTIVE_LLM", "vllm").lower()
+        """Load provider and model configuration dynamically from OpenShift ConfigMap & Secret"""
 
-        # Dynamically load model and base URL based on the active LLM
-        self.base_url = os.getenv(f"{self.provider.upper()}_BASE_URL", "").strip().strip('"').rstrip("/")
-        self.model_name = os.getenv(f"{self.provider.upper()}_MODEL", "default-model")
-        self.api_key = os.getenv("LLM_API_KEY", None)  # Some providers require API keys
+        # Get Active Provider from ConfigMap (example: "ollama", "vllm", "granite", "openai", etc.)
+        self.provider = os.getenv("ACTIVE_PROVIDER", "default").lower()
 
-        self.max_retries = 3
+        # Get corresponding model for the provider
+        self.model_name = os.getenv(f"{self.provider.upper()}_MODEL", "default-model").strip()
+        self.base_url = os.getenv(f"{self.provider.upper()}_BASE_URL", "").strip()
+        self.api_key = os.getenv("LLM_API_KEY", None)  # API Key (only for certain providers)
 
-        # ✅ Fix for Podman localhost issue
-        if self.base_url == "http://localhost:8000":
-            self.base_url = "http://host.containers.internal:8000"
+        # ✅ Debugging logs to verify the loaded configuration
+        logger.info(f"🔍 ACTIVE PROVIDER: {self.provider}")
+        logger.info(f"🔍 MODEL: {self.model_name}")
+        logger.info(f"🔍 BASE URL: {self.base_url or 'MISSING'}")
+        logger.info(f"🔍 API KEY: {'SET' if self.api_key else 'NOT SET'}")
 
-        logger.info(f"✅ Using LLM Provider: {self.provider} | Model: {self.model_name} | URL: {self.base_url}")
-
+        # Error handling for missing base URL
         if not self.base_url:
-            logger.error("❌ LLM Base URL is missing. Check ConfigMap or environment variables.")
-        if not self.api_key and self.provider in ["openai", "granite"]:
-            logger.warning("⚠️ No LLM API Key provided. Some endpoints may require authentication.")
-
+            logger.error("❌ Base URL is missing. Check ConfigMap or environment variables.")
+    
     def infer(self, prompt: str) -> str:
         """Send a prompt to the selected LLM API and return JSON response."""
         if not self.base_url:
-            logger.error("❌ No LLM API URL configured.")
-            return json.dumps({"error": "Missing LLM API URL in config"})
+            logger.error("❌ No API URL configured.")
+            return json.dumps({"error": "Missing API URL in config"})
 
-        # ✅ API payloads for different LLMs
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
+        # 🛠 API-Specific Request Format Handling
         if self.provider == "vllm":
             url = f"{self.base_url}/v1/completions"
             payload = {"model": self.model_name, "prompt": prompt, "temperature": 0.1, "max_tokens": 1000}
         elif self.provider == "ollama":
             url = f"{self.base_url}/api/generate"
             payload = {"model": self.model_name, "prompt": prompt}
-        elif self.provider == "granite":
-            url = f"{self.base_url}/models/{self.model_name}:generateContent"
+        elif self.provider == "gemini":
+            url = f"{self.base_url}/models/{self.model_name}:generateContent?key={self.api_key}"
             payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        else:  # Default OpenAI-compatible API
+        elif self.provider == "deepseek":
             url = f"{self.base_url}/v1/chat/completions"
             payload = {
                 "model": self.model_name,
-                "messages": [
-                    {"role": "system", "content": "You must respond in JSON format."},
-                    {"role": "user", "content": prompt}
-                ],
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.7,
+                "max_tokens": 500,
+            }
+        else:  # Default to OpenAI-compatible models
+            url = f"{self.base_url}/v1/chat/completions"
+            payload = {
+                "model": self.model_name,
+                "messages": [{"role": "system", "content": "Respond in JSON format only."}, {"role": "user", "content": prompt}],
                 "max_tokens": 1000,
                 "temperature": 0.1,
             }
 
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
-
-        for attempt in range(1, self.max_retries + 1):
+        # 🔄 Retry mechanism
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
             try:
+                start_time = datetime.now()
                 response = requests.post(url, json=payload, headers=headers, timeout=120)
                 response.raise_for_status()
-                return response.json()
+                data = response.json()
+
+                elapsed_time = (datetime.now() - start_time).total_seconds()
+                logger.info(f"⏱️ API Response Time: {elapsed_time:.2f} seconds")
+                logger.info(f"✅ Raw API Response: {json.dumps(data, indent=2)}")
+
+                # ✅ Extract relevant response text
+                if self.provider == "vllm":
+                    return json.dumps({"text": data["choices"][0]["text"].strip()}, indent=2)
+
+                choices = data.get("choices", [])
+                if choices:
+                    response_text = choices[0].get("message", {}).get("content", "").strip()
+                    return json.dumps({"response": response_text}, indent=2)
+
+                return json.dumps({"error": "Empty response from LLM"})
+
             except requests.exceptions.RequestException as e:
-                logger.error(f"❌ LLM API Error on attempt {attempt}: {e}")
-                if attempt < self.max_retries:
+                logger.error(f"❌ API Error on attempt {attempt}: {e}")
+                if attempt < max_retries:
                     sleep(5)
+                    logger.info(f"🔄 Retrying... Attempt {attempt + 1}/{max_retries}")
                 else:
-                    return json.dumps({"error": "LLM API request failed after retries"})
+                    return json.dumps({"error": "API request failed after retries"})
