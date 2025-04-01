@@ -5,8 +5,8 @@ leopard_pont_des_arts_prompt: |
   Please solve the following step by step:
   1. Convert the leopard's speed from kilometers per hour (km/h) to meters per second (m/s).
   2. Use the formula: time = distance / speed
-  3. Show the intermediate steps.
-  4. Return the final result in **JSON format**.
+  3. Show the intermediate steps in plain text.
+  4. Return the final result in **JSON format** (no markdown or backticks).
 
   The output must be valid JSON:
   {
