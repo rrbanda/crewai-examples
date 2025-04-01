@@ -2,16 +2,14 @@ leopard_pont_des_arts_prompt: |
   A leopard can run at a top speed of 58 km/h.
   The Pont des Arts bridge is 155 meters long.
 
-  Please solve the following step by step:
-  1. Convert the leopard's speed from kilometers per hour (km/h) to meters per second (m/s).
-  2. Use the formula: time = distance / speed
-  3. Show the intermediate steps clearly.
-  4. Calculate the final time and round to two decimal places.
-  5. Return only the final result in **valid JSON format** — do not use markdown or backticks.
+  Solve step by step:
+  1. Convert speed from km/h to m/s: 1 km/h = 1000 / 3600 m/s
+  2. Use formula: time_seconds = distance / speed
+  3. Round final answer to 2 decimal places.
+  4. Return result only as a **valid JSON object** (no markdown, no backticks). Ensure that `time_seconds` matches your calculation.
 
-  The JSON must match the calculation from step 2 and 4:
-
+  Output format:
   {
-    "time_seconds": <numeric_value>,
-    "explanation": "<step-by-step explanation of the calculation>"
+    "time_seconds": <calculated_value>,
+    "explanation": "<explain the math steps clearly>"
   }
