@@ -41,8 +41,7 @@ end
 **Leopard Pont Des Arts** is an **AI-powered agent** built using **CrewAI**, integrating **real-time web search** and **large language models (LLMs)** to generate intelligent responses.
 
 This AI assistant:
-- ✅ **Fetches real-time information** via **DuckDuckGo search**
-- ✅ **Processes search & input data using an LLM** (Supports vLLM, OpenAI, Ollama, DeepSeek, and more)
+- ✅ **Processes input data using an LLM** (Supports vLLM, OpenAI, Ollama, DeepSeek, and more)
 - ✅ **Uses CrewAI for structured AI workflows**
 - ✅ **Supports multiple deployment options** (Local, Podman, OpenShift)
 
